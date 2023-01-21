@@ -46,8 +46,13 @@ public:
             return;
         }
 
-        std::string payload = Acore::StringFormatFmt("message('{}');", msg);
+        std::string payload = Acore::StringFormatFmt("print('{}');", msg);
         uint16 payloadId = warden->RegisterPayload(payload);
+
+        for (uint32 i = 0; i < warden->GetPayloadsInQueue(); i++)
+        {
+            warden->ForceChecks();
+        }
 
         warden->QueuePayload(payloadId);
         warden->ForceChecks();
