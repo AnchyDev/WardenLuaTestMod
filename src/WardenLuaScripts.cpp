@@ -9,7 +9,6 @@
 #include "Warden.h"
 
 std::string welcomePayload = "message('Welcome to the server!');";
-uint16 welcomePayloadId;
 
 class WardenLuaPlayer : public PlayerScript
 {
@@ -29,8 +28,14 @@ public:
             return;
         }
 
-        welcomePayloadId = warden->RegisterPayload(welcomePayload);
-        warden->QueuePayload(welcomePayloadId);
+        auto payloadMgr = warden->GetPayloadMgr();
+        if (!payloadMgr)
+        {
+            return;
+        }
+
+        uint32 payloadId = payloadMgr->RegisterPayload(welcomePayload);
+        payloadMgr->QueuePayload(payloadId);
     }
 
     void OnBeforeSendChatMessage(Player* player, uint32& type, uint32& lang, std::string& msg)
@@ -40,21 +45,27 @@ public:
             return;
         }
 
-        Warden* warden = player->GetSession()->GetWarden();
+        auto warden = player->GetSession()->GetWarden();
         if (!warden)
         {
             return;
         }
 
-        std::string payload = Acore::StringFormatFmt("print('{}');", msg);
-        uint16 payloadId = warden->RegisterPayload(payload);
+        auto payloadMgr = warden->GetPayloadMgr();
+        if (!payloadMgr)
+        {
+            return;
+        }
 
-        for (uint32 i = 0; i < warden->GetPayloadsInQueue(); i++)
+        std::string payload = Acore::StringFormatFmt("print('{}');", msg);
+        uint32 payloadId = payloadMgr->RegisterPayload(payload);
+        
+        for (uint32 i = 0; i < payloadMgr->GetPayloadsInQueue(); i++)
         {
             warden->ForceChecks();
         }
 
-        warden->QueuePayload(payloadId);
+        payloadMgr->QueuePayload(payloadId);
         warden->ForceChecks();
     }
 };
