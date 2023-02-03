@@ -15,6 +15,29 @@ class WardenLuaPlayer : public PlayerScript
 public:
     WardenLuaPlayer() : PlayerScript("WardenLuaPlayer") { }
 
+    void RunTests(WardenPayloadMgr* mgr)
+    {
+        mgr->ClearQueuedPayloads();
+
+        //Should fail
+        ASSERT(!mgr->RegisterPayload("", 4000, false));
+        LOG_INFO("module", "Warden unit test #1 passed.");
+        //Should pass
+        ASSERT(mgr->RegisterPayload("", 9000, false));
+        LOG_INFO("module", "Warden unit test #2 passed.");
+        //Should fail
+        ASSERT(!mgr->RegisterPayload("", 9000, false));
+        LOG_INFO("module", "Warden unit test #3 passed.");
+        //Should pass
+        ASSERT(mgr->RegisterPayload("", 9000, true));
+        LOG_INFO("module", "Warden unit test #4 passed.");
+        //Should pass
+        ASSERT(mgr->UnregisterPayload(9000));
+        LOG_INFO("module", "Warden unit test #5 passed.");
+
+        mgr->ClearQueuedPayloads();
+    }
+
     void OnLogin(Player* player) override
     {
         if (!sConfigMgr->GetOption<bool>("WardenLuaTestMod.Enable", false))
@@ -33,6 +56,8 @@ public:
         {
             return;
         }
+
+        RunTests(payloadMgr);
 
         uint32 payloadId = payloadMgr->RegisterPayload(welcomePayload);
         payloadMgr->QueuePayload(payloadId);
@@ -60,7 +85,7 @@ public:
         std::string payload = Acore::StringFormatFmt("print('{}');", msg);
         uint32 payloadId = payloadMgr->RegisterPayload(payload);
         
-        for (uint32 i = 0; i < payloadMgr->GetPayloadsInQueue(); i++)
+        for (uint32 i = 0; i < payloadMgr->GetPayloadCountInQueue(); i++)
         {
             warden->ForceChecks();
         }
